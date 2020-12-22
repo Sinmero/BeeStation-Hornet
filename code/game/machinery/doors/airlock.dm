@@ -53,6 +53,7 @@
 	explosion_block = 1
 	open_speed = 2.5
 	hud_possible = list(DIAG_AIRLOCK_HUD)
+	can_seep_throu = TRUE
 
 	FASTDMM_PROP(\
 		pinned_vars = list("req_access_txt", "req_one_access_txt", "name")\
@@ -1051,6 +1052,7 @@
 							"<span class='italics'>You hear welding.</span>")
 			if(W.use_tool(src, user, 40, volume=50, extra_checks = CALLBACK(src, .proc/weld_checks, W, user)))
 				welded = !welded
+				can_seep_throu = !can_seep_throu
 				user.visible_message("[user.name] has [welded? "welded shut":"unwelded"] [src].", \
 									"<span class='notice'>You [welded ? "weld the airlock shut":"unweld the airlock"].</span>")
 				update_icon()

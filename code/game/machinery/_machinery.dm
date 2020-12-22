@@ -116,6 +116,10 @@ Class Procs:
 	var/speed_process = FALSE // Process as fast as possible?
 	var/obj/item/circuitboard/circuit // Circuit to be created and inserted when the machinery is created
 	var/damage_deflection = 0
+	var/can_seep_throu = FALSE
+	var/climb_time = 20
+	var/climb_stun = 20
+	var/mob/living/structureclimber
 
 	var/interaction_flags_machine = INTERACT_MACHINE_WIRES_IF_OPEN | INTERACT_MACHINE_ALLOW_SILICON | INTERACT_MACHINE_OPEN_SILICON | INTERACT_MACHINE_SET_MACHINE
 	var/fair_market_price = 69
@@ -563,3 +567,52 @@ Class Procs:
 
 /obj/machinery/rust_heretic_act()
 	take_damage(500, BRUTE, "melee", 1)
+
+/obj/machinery/MouseDrop_T(atom/movable/O, mob/user)
+	. = ..()
+	var/mob/living/seep = O
+	if(!can_seep_throu || !seep.can_seep)
+		return
+	if(user == O)
+		var/mob/living/C = O
+		if(C.mobility_flags & MOBILITY_MOVE)
+			climb_structure(user)
+			return
+	if(!istype(O, /obj/item) || user.get_active_held_item() != O)
+		return
+	if(iscyborg(user))
+		return
+	if(!user.dropItemToGround(O))
+		return
+	if (O.loc != src.loc)
+		step(O, get_dir(O, src))
+
+/obj/machinery/proc/do_climb(atom/movable/A)
+
+	if(can_seep_throu)
+		density = FALSE
+		. = step(A,get_dir(A,src.loc))
+		density = TRUE
+
+/obj/machinery/proc/climb_structure(mob/living/user)
+	src.add_fingerprint(user)
+	user.visible_message("<span class='warning'>[user] starts seeping throu [src].</span>", \
+								"<span class='notice'>You start seeping throu [src]...</span>")
+	var/adjusted_climb_time = climb_time
+	if(user.restrained()) //climbing takes twice as long when restrained.
+		adjusted_climb_time *= 2
+	if(HAS_TRAIT(user, TRAIT_FREERUNNING)) //do you have any idea how fast I am???
+		adjusted_climb_time *= 0.8
+	structureclimber = user
+	if(do_mob(user, user, adjusted_climb_time))
+		if(src.loc) //Checking if structure has been destroyed
+			if(do_climb(user))
+				user.visible_message("<span class='warning'>[user] seeps throu [src].</span>", \
+									"<span class='notice'>You seep throu [src].</span>")
+				log_combat(user, src, "seeped throu")
+				if(climb_stun)
+					user.Stun(climb_stun)
+				. = 1
+			else
+				to_chat(user, "<span class='warning'>You fail to seep throu [src].</span>")
+	structureclimber = null
