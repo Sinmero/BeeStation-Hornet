@@ -65,6 +65,14 @@
 	var/base_multiplier = 1
 	spans = list("colossus","yell")
 
+/obj/item/organ/vocal_cords/colossus/attack(mob/living/carbon/human/H, mob/living/carbon/human/user, obj/target)
+	if(H == user && istype(H))
+		playsound(user,'sound/effects/curse1.ogg',40,1)
+		user.temporarilyRemoveItemFromInventory(src, TRUE)
+		Insert(user)
+	else
+		return ..()
+
 /datum/action/item_action/organ_action/colossus
 	name = "Voice of God"
 	var/obj/item/organ/vocal_cords/colossus/cords = null
